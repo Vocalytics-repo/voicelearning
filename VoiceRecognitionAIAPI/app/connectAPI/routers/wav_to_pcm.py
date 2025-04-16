@@ -31,15 +31,14 @@ async def wav_to_text(file: UploadFile = File(...)):
         content = await file.read()
         await out_file.write(content)
 
-    # 2. WAV -> PCM 변환
+    # WAV -> PCM 변환
     pcm_data = await convert_wav_to_pcm(wav_path)
 
+    # 이 부분에 나중에 pcm_to_text 파일로 연결해야함
     text = "example data"
 
-    # 5. 임시 파일 삭제
     os.remove(wav_path)
 
-    # 6. 응답 반환
     processing_time = time.time() - start_time
     return TextResponse(
         text=text,
