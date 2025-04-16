@@ -1,5 +1,4 @@
 from fastapi import APIRouter, File, UploadFile, HTTPException
-from fastapi.responses import JSONResponse
 from app.connectAPI.routers.struct import TextResponse
 import time
 import os
@@ -7,11 +6,10 @@ import uuid
 import aiofiles
 import numpy as np
 import wave
+
 router = APIRouter()
 
 TEMP_DIR = None
-REDIS_EXPIRY = None
-redis_client = None
 
 @router.post("/api/wav-to-text", response_model=TextResponse)
 async def wav_to_text(file: UploadFile = File(...)):
@@ -36,13 +34,6 @@ async def wav_to_text(file: UploadFile = File(...)):
     # 2. WAV -> PCM 변환
     pcm_data = await convert_wav_to_pcm(wav_path)
 
-    # 3. PCM 데이터를 Redis에 저장
-    redis_key = f"pcm:{job_id}"
-    redis_client.set(redis_key, pcm_data.tobytes())
-    redis_client.expire(redis_key, REDIS_EXPIRY)
-
-    # 4. PCM 데이터를 모델에 입력하여 텍스트 변환
-#    text = await process_pcm_to_text(job_id)
     text = "example data"
 
     # 5. 임시 파일 삭제
