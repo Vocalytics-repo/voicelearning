@@ -27,6 +27,8 @@ var/
 .installed.cfg
 *.egg
 venv/
+/.venv
+
 
 # Trained model weights -> large
 *.h5
