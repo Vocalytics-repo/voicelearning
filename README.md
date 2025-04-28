@@ -8,24 +8,37 @@
 - **Containerization**: Docker, docker-compose
 
 ## Project Structure
-VoiceRecognitionAIAPI/
+'''VoiceRecognitionAIAPI/
 ├── .venv/
 ├── app/
 │   ├── connectAPI/
-│   │   └── manage/
-│   │       └── manage_redis.py
-│   ├── model/
-│   │   └── models.py
-│   ├── routers/
-│   │   ├── pcm_to_text.py
-│   │   ├── redis.py
-│   │   ├── struct.py
-│   │   └── wav_to_pcm.py
-│   └── main.py
-├── model/
-│   └── Dockerfile
-├── redis/
-│   ├── init.py
-│   └── Dockerfile
+│   │   ├── routers/
+│   │   │   ├── __init__.py
+│   │   │   ├── struct.py
+│   │   │   └── stt.py
+│   │   ├── service/
+│   │   │   ├── errorcheck/
+│   │   │   │   └── typeerror.py
+│   │   │   ├── model/
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── models.py
+│   │   │   ├── preprocessing/
+│   │   │   │   ├── __init__.py
+│   │   │   ├── __init__.py
+│   │   │   └── control.py
+│   │   └── temp/
+│   │       ├── __init__.py
+│   │       └── main.py
+│   └── __init__.py
+├── Managejupyter/
+│   ├── __init__.py
+│   └── temp/
+├── venv/
+│   ├── bin/
+│   ├── include/
+│   ├── lib/
+│   ├── share/
+│   └── pyvenv.cfg
+├── .gitignore
 ├── docker-compose.yml
-└── Dockerfile
+└── trainedModel.pt'''
