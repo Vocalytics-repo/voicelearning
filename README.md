@@ -44,3 +44,23 @@ VoiceRecognitionAIAPI/
 ├── docker-compose.yml
 └── trainedModel.pt
 ```
+
+## API Documentation
+
+### Endpoints
+
+#### POST /api/v1/stt
+Speech-to-Text conversion endpoint.
+
+**Request:**
+- Content-Type: multipart/form-data
+- Body: audio file (.wav, .mp3)
+
+**Response:**
+- Status: 200 OK
+- Content-Type: application/json
+```json
+{
+  "text": "converted speech text",
+  "confidence": 0.95
+}
