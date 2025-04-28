@@ -8,8 +8,7 @@
 - **Containerization**: Docker, docker-compose
 
 ## Project Structure
-'''
-
+```
 VoiceRecognitionAIAPI/
 ├── .venv/
 ├── app/
@@ -25,7 +24,7 @@ VoiceRecognitionAIAPI/
 │   │   │   │   ├── __init__.py
 │   │   │   │   └── models.py
 │   │   │   ├── preprocessing/
-│   │   │   │   ├── __init__.py
+│   │   │   │   └── __init__.py
 │   │   │   ├── __init__.py
 │   │   │   └── control.py
 │   │   └── temp/
@@ -44,5 +43,4 @@ VoiceRecognitionAIAPI/
 ├── .gitignore
 ├── docker-compose.yml
 └── trainedModel.pt
-
-'''
+```
