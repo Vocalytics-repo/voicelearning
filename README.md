@@ -8,7 +8,9 @@
 - **Containerization**: Docker, docker-compose
 
 ## Project Structure
-'''VoiceRecognitionAIAPI/
+'''
+
+VoiceRecognitionAIAPI/
 ├── .venv/
 ├── app/
 │   ├── connectAPI/
@@ -41,4 +43,6 @@
 │   └── pyvenv.cfg
 ├── .gitignore
 ├── docker-compose.yml
-└── trainedModel.pt'''
+└── trainedModel.pt
+
+'''
