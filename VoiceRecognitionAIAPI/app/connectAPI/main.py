@@ -9,10 +9,6 @@ app = FastAPI(title="WAV to Text API")
 
 # 서버 시작 함수
 def start_server():
-
-    # wav_to_pcm.py 모듈의 전역 변수 설정
-    import app.connectAPI.routers.stt as sound_to_text_router
-
     # 라우터 등록
     app.include_router(stt_router)
     return app
@@ -20,4 +16,4 @@ def start_server():
 # 메인 실행 블록
 if __name__ == "__main__":
     app = start_server()  # 앱 초기화
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8081)

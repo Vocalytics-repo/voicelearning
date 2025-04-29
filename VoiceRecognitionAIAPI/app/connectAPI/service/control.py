@@ -6,8 +6,9 @@ from typing import Union, Dict, Any
 from fastapi import UploadFile
 
 async def control_all(wav_data : Union[bytes, UploadFile]) -> Dict[str,Any]:
-    pcm_data, sample_width = convert_wav_to_pcm(wav_data)
-    numpy_data = convert_pcm_to_numpy(pcm_data,sample_width)
-    pre_pcm = convert_preprocessing(numpy_data)
-    text = sttmodel.start_stt(pre_pcm)
+    model = sttmodel()
+    pcm_data, sample_width = await convert_wav_to_pcm(wav_data)
+    numpy_data = await convert_pcm_to_numpy(pcm_data,sample_width)
+    pre_pcm = await convert_preprocessing(numpy_data)
+    text = model.start_stt(pre_pcm)
     return {"text":text}
