@@ -6,7 +6,7 @@ class errorhandling:
         self.AllowedType = [".mp3", ".wav"]
 
     def soundcheck(self, file):
-        _, file_extension = os.path.splitext(file.filename.lower())
+        _, file_extension = os.path.splitext(file.lower())
         if file_extension not in self.AllowedType:
             return False
         else:
