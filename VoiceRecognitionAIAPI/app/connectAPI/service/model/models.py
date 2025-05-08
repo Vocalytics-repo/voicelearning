@@ -83,6 +83,7 @@ class sttmodel:
     def start_stt(self, test_file: np.ndarray) -> Any:
         self.check_cuda()
         self.initialize_model()
-        self.find_pt("/Users/yongmin/Desktop/voicelearning/VoiceRecognitionAIAPI/app/connectAPI/service/model")   # pt 확장자로 된 pt파일 이름을 넣는 것이 아닌 pt 파일이 존재하는 디렉토리 이름을 넣는다.
+        #self.find_pt("/Users/yongmin/Desktop/voicelearning/VoiceRecognitionAIAPI/app/connectAPI/service/model")   # pt 확장자로 된 pt파일 이름을 넣는 것이 아닌 pt 파일이 존재하는 디렉토리 이름을 넣는다.
+        self.find_pt("/app/app/connectAPI/service/model")
         self.stt_model(test_file)
         return self.transcription
