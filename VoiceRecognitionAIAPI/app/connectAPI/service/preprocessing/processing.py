@@ -1,8 +1,11 @@
 import numpy as np
 import librosa
 # PCM 파일 로드 함수
-async def convert_preprocessing(np_pcm, sr=16000, bit_depth=16)->np.ndarray:
-    emphasized = apply_preemphasis(np_pcm)
+async def convert_preprocessing(np_pcm)->np.ndarray:
+    normalized = np_pcm / np.max(np.abs(np_pcm))
+    return normalized
+
+'''    emphasized = apply_preemphasis(np_pcm)
     denoised = simple_noise_reduction(emphasized)
     normalized = normalize_audio(denoised)
     vad_mask, vad_frames = simple_vad(normalized)
@@ -11,8 +14,7 @@ async def convert_preprocessing(np_pcm, sr=16000, bit_depth=16)->np.ndarray:
     delta_features, delta2_features = compute_deltas(mfcc_features)
     combined_features = np.vstack([mfcc_features, delta_features, delta2_features])
     return combined_features
-
-
+''''''
 # 1. 프리엠퍼시스 (Pre-emphasis)
 def apply_preemphasis(audio_data, coef=0.97):
     """Apply pre-emphasis filter to audio data"""
@@ -147,4 +149,4 @@ def simple_time_scale(audio_data, scale_factor=1.0):
             return librosa.effects.time_stretch(y=audio_data, rate=scale_factor)
         except:
             print("librosa.effects.time_stretch 함수에 문제가 있습니다. 오디오 원본을 반환합니다.")
-            return audio_data
+            return audio_data'''
