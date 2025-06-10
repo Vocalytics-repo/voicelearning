@@ -64,3 +64,38 @@ Speech-to-Text conversion endpoint.
   "text": "converted speech text",
   "confidence": 0.95
 }
+
+
+# DataSet
+- AIhub korea sound dataset
+- URI :  https://www.aihub.or.kr/aihubdata/data/view.do?currMenu=115&topMenu=100&aihubDataSe=realm&dataSetSn=123
+- Explain : 
+    Korean Free Speech Voice Data for Acoustic Models to Improve Conversational Speech Recognition Performance
+
+    1000 hours of Korean conversation voices from 2,000 people in a quiet environment
+
+    Recording two people talking freely on various topics
+
+- File sturcture:
+    - KsponSpeech_01.zip - 14.25GB (Use)
+    - KsponSpeech_02.zip - 14.26GB
+    - KsponSpeech_03.zip - 14.18GB
+    - KsponSpeech_04.zip - 14.23GB
+    - KsponSpeech_05.zip - 14.57GB
+
+
+# Model
+- Whisper-small : Whisper is a pre-trained model for automatic speech recognition and speech translation 
+Learned based on 680K hours of labeled data
+Seq2seq model with transformer-based encoder-decoder model
+Learned based on weak supervised learning
+
+For whisper small model
+
+Parameters: 244M (240 million)
+
+Size: 461MB
+
+Language: Supports 99 languages
+
+Reason for selection: Because I wanted to extract performance in a light state rather than a heavy state with multiple services combined in the STT service
