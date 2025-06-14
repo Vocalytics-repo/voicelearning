@@ -27,6 +27,7 @@ class STTModelSingleton:
             self.device = None
             self.sr = 16000
             self.is_finetuned_model = False
+            self.use_mfcc_preprocessing = False
 
             # 모델 초기화 (한 번만 실행)
             self._setup_model()
@@ -373,3 +374,329 @@ def quick_transcribe(audio_data: np.ndarray) -> str:
     """빠른 음성 인식 함수 (외부에서 호출용)"""
     model = get_stt_model()
     return model.transcribe(audio_data)
+'''
+import torch.nn as nn
+import numpy as np
+import torch
+from transformers import WhisperProcessor, WhisperForConditionalGeneration, WhisperConfig
+from typing import Any, Text
+import os
+import time
+
+
+class STTModelSingleton:
+    """
+    싱글톤 패턴으로 모델을 한 번만 로딩하는 STT 모델
+    """
+    _instance = None
+    _initialized = False
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(STTModelSingleton, cls).__new__(cls)
+        return cls._instance
+
+    def __init__(self):
+        if not self._initialized:
+            print("🎯 STT 모델 싱글톤 초기화 시작")
+            self.model = None
+            self.processor = None
+            self.device = None
+            self.sr = 16000
+            self.is_finetuned_model = False
+
+            # 모델 초기화 (한 번만 실행)
+            self._setup_model()
+            STTModelSingleton._initialized = True
+            print("✅ STT 모델 싱글톤 초기화 완료")
+
+    def _setup_model(self):
+        """모델 설정 (한 번만 실행)"""
+        print("🚀 STT 모델 설정 시작")
+        self.check_cuda()
+        self.initialize_model()
+        print("✅ STT 모델 설정 완료")
+
+    def transcribe(self, audio):
+        """청킹을 사용한 긴 오디오 음성 인식 함수"""
+        print(f"🔍 추론 시작 - 입력 타입: {type(audio)}, 형태: {audio.shape}")
+
+        try:
+            # 오디오 전처리
+            if len(audio.shape) == 2:
+                print("⚠️ 2D 배열 감지 - 원시 오디오로 변환")
+                audio = audio[0, :] if audio.shape[0] < audio.shape[1] else audio.flatten()
+                print(f"🔄 2D → 1D 변환 완료 (길이: {len(audio)})")
+            else:
+                print("✅ 1D 배열 감지 - 원시 오디오 직접 사용")
+
+            # 정규화
+            if np.max(np.abs(audio)) > 0:
+                audio = audio / np.max(np.abs(audio))
+                print("✅ 오디오 정규화 완료")
+
+            # 오디오 길이 계산
+            duration_seconds = len(audio) / self.sr
+            print(f"📏 오디오 길이: {duration_seconds:.2f}초")
+
+            # 30초 이하면 기존 방식 사용
+            if duration_seconds <= 30.0:
+                return self._transcribe_single_chunk(audio)
+
+            # 30초 이상이면 청킹 처리
+            return self._transcribe_with_chunking(audio)
+
+        except Exception as e:
+            print(f"❌ 음성 인식 실패: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return "음성 인식 실패"
+
+    def _transcribe_single_chunk(self, audio):
+        """단일 청크 처리"""
+        # 최소 길이 확보
+        if len(audio) < 1600:
+            repeat_times = (1600 // len(audio)) + 1
+            audio = np.tile(audio, repeat_times)[:1600]
+
+        # Whisper 전처리
+        input_features = self.processor.feature_extractor(
+            audio,
+            sampling_rate=self.sr,
+            return_tensors="pt"
+        ).input_features
+
+        # GPU 사용 시 이동
+        if torch.cuda.is_available():
+            input_features = input_features.cuda()
+            self.model = self.model.cuda()
+
+        input_features = input_features.to(self.model.dtype)
+
+        # 추론 수행
+        start_time = time.time()
+
+        with torch.no_grad():
+            if self.is_finetuned_model:
+                predicted_ids = self.model.generate(
+                    input_features,
+                    max_length=448,
+                    num_beams=3,
+                    repetition_penalty=1.1,
+                    no_repeat_ngram_size=2,
+                    do_sample=False,
+                    early_stopping=True,
+                    language="korean",
+                    task="transcribe"
+                )
+            else:
+                predicted_ids = self.model.generate(
+                    input_features,
+                    max_length=448,
+                    num_beams=5,
+                    repetition_penalty=1.1,
+                    no_repeat_ngram_size=2,
+                    do_sample=False,
+                    early_stopping=True,
+                    language="korean",
+                    task="transcribe"
+                )
+
+        inference_time = time.time() - start_time
+        print(f"🏁 추론 시간: {inference_time:.3f}초")
+
+        # 텍스트 디코딩
+        transcription = self.processor.tokenizer.batch_decode(
+            predicted_ids,
+            skip_special_tokens=True
+        )[0]
+
+        return transcription.strip()
+
+    def _transcribe_with_chunking(self, audio):
+        """청킹을 사용한 긴 오디오 처리"""
+        chunk_length = 25 * self.sr  # 25초 청크 (30초 한계보다 작게)
+        overlap_length = 2 * self.sr  # 2초 오버랩 (연결성 보장)
+
+        chunks = []
+        transcriptions = []
+
+        print(f"🔀 청킹 처리 시작 - 청크 길이: 25초, 오버랩: 2초")
+
+        # 오디오를 청크로 분할
+        start_idx = 0
+        chunk_num = 0
+
+        while start_idx < len(audio):
+            end_idx = min(start_idx + chunk_length, len(audio))
+            chunk = audio[start_idx:end_idx]
+
+            # 너무 짧은 청크는 패딩
+            if len(chunk) < 1600:
+                chunk = np.pad(chunk, (0, 1600 - len(chunk)), 'constant')
+
+            chunks.append(chunk)
+            chunk_duration = len(chunk) / self.sr
+            print(f"📄 청크 {chunk_num + 1}: {chunk_duration:.2f}초")
+
+            chunk_num += 1
+            start_idx += (chunk_length - overlap_length)
+
+        print(f"📊 총 {len(chunks)}개 청크로 분할 완료")
+
+        # 각 청크 처리
+        total_start_time = time.time()
+
+        for i, chunk in enumerate(chunks):
+            print(f"🔍 청크 {i + 1}/{len(chunks)} 처리 중...")
+
+            try:
+                chunk_transcription = self._transcribe_single_chunk(chunk)
+
+                if chunk_transcription and chunk_transcription != "음성 인식 실패":
+                    transcriptions.append(chunk_transcription)
+                    print(f"✅ 청크 {i + 1} 완료: {chunk_transcription[:50]}...")
+                else:
+                    print(f"⚠️ 청크 {i + 1} 인식 실패")
+
+            except Exception as e:
+                print(f"❌ 청크 {i + 1} 에러: {str(e)}")
+                continue
+
+        total_time = time.time() - total_start_time
+        print(f"🏁 전체 청킹 처리 시간: {total_time:.3f}초")
+
+        # 결과 합치기
+        if transcriptions:
+            # 중복 제거 및 정리
+            final_transcription = self._merge_transcriptions(transcriptions)
+            print(f"✅ 최종 음성 인식 완료 ({len(transcriptions)}개 청크)")
+            return final_transcription
+        else:
+            print("❌ 모든 청크 인식 실패")
+            return "음성 인식 실패"
+
+    def _merge_transcriptions(self, transcriptions):
+        """여러 청크의 텍스트를 합치고 중복 제거"""
+        if not transcriptions:
+            return ""
+
+        if len(transcriptions) == 1:
+            return transcriptions[0]
+
+        # 간단한 합치기 (개선 가능)
+        merged = []
+
+        for i, text in enumerate(transcriptions):
+            text = text.strip()
+            if not text:
+                continue
+
+            # 첫 번째 청크는 그대로 추가
+            if i == 0:
+                merged.append(text)
+            else:
+                # 이전 텍스트와 중복 확인 후 추가
+                prev_text = merged[-1] if merged else ""
+
+                # 마지막 몇 단어가 겹치는지 확인
+                words = text.split()
+                prev_words = prev_text.split()
+
+                # 간단한 중복 제거 (마지막 2-3단어 확인)
+                overlap_found = False
+                if len(prev_words) >= 2 and len(words) >= 2:
+                    for j in range(min(3, len(prev_words), len(words))):
+                        if prev_words[-(j + 1):] == words[:j + 1]:
+                            # 중복 발견, 중복 부분 제거하고 추가
+                            merged.append(" ".join(words[j + 1:]))
+                            overlap_found = True
+                            break
+
+                if not overlap_found:
+                    merged.append(text)
+
+        return " ".join(merged).strip()
+    def initialize_model(self):
+        """Hugging Face 형식 모델 초기화"""
+        try:
+            # 🎯 로컬 파인튜닝 모델 경로
+            local_model_path = "./app/connectAPI/service/model/whisper_korean"
+
+            if os.path.exists(local_model_path):
+                print(f"🔄 로컬 파인튜닝 모델 로딩 중: {local_model_path}")
+
+                # Hugging Face 형식으로 로드
+                self.processor = WhisperProcessor.from_pretrained(local_model_path)
+                self.model = WhisperForConditionalGeneration.from_pretrained(local_model_path)
+
+                # 파인튜닝 모델 플래그 설정
+                self.is_finetuned_model = True
+                print("✅ 로컬 파인튜닝 모델 로드 완료")
+
+            else:
+                print("⚠️ 로컬 모델이 없어 기본 Whisper 모델 사용")
+                # 기본 모델 로드
+                self.processor = WhisperProcessor.from_pretrained("openai/whisper-small")
+                self.model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-small")
+                self.is_finetuned_model = False
+                print("✅ 기본 모델 로드 완료")
+
+            # Generation config 정리
+            if hasattr(self.model, 'generation_config'):
+                if hasattr(self.model.generation_config, 'forced_decoder_ids'):
+                    self.model.generation_config.forced_decoder_ids = None
+                if hasattr(self.model.generation_config, 'suppress_tokens'):
+                    self.model.generation_config.suppress_tokens = None
+                print("🔧 Generation config 정리 완료")
+
+            # 디바이스 이동
+            if self.device is not None:
+                self.model.to(self.device)
+
+            print("✅ 모델 초기화 완료")
+
+        except Exception as e:
+            print(f"❌ 로컬 모델 로드 실패: {str(e)}")
+            # 폴백: 기본 모델
+            try:
+                print("🔄 기본 모델로 폴백...")
+                self.processor = WhisperProcessor.from_pretrained("openai/whisper-small")
+                self.model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-small")
+                self.is_finetuned_model = False
+
+                if self.device is not None:
+                    self.model.to(self.device)
+
+                print("✅ 기본 모델 폴백 완료")
+
+            except Exception as fallback_error:
+                print(f"❌ 폴백도 실패: {str(fallback_error)}")
+                raise RuntimeError("모델 초기화가 완전히 실패했습니다.")
+
+    def check_cuda(self):
+        if torch.cuda.is_available():
+            self.device = torch.device("cuda:0")
+            print("GPU 사용")
+        else:
+            self.device = torch.device("cpu")
+            print("CPU 사용")
+
+
+# 전역 모델 인스턴스 (서버 시작 시 한 번만 생성)
+stt_model_instance = None
+
+
+def get_stt_model():
+    """STT 모델 인스턴스를 가져오는 함수"""
+    global stt_model_instance
+    if stt_model_instance is None:
+        stt_model_instance = STTModelSingleton()
+    return stt_model_instance
+
+
+def quick_transcribe(audio_data: np.ndarray) -> str:
+    """빠른 음성 인식 함수 (외부에서 호출용)"""
+    model = get_stt_model()
+    return model.transcribe(audio_data)
+'''

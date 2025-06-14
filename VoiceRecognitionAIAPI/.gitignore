@@ -29,6 +29,8 @@ var/
 venv/
 /.venv
 
+.bin
+
 *.wav
 # Trained model weights -> large
 *.h5
