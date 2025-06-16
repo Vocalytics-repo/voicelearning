@@ -168,7 +168,7 @@ async def _optimized_preprocessing(audio_data: np.ndarray) -> np.ndarray:
         if max_val > 0:
             audio_data = audio_data / max_val
 
-        # 3. 매우 낮은 노이즈 게이트 (기존 0.005 → 0.001로 개선)
+        # 3. 매우 낮은 노이즈 게이트 (기존 0.005 → 0.0005로 개선)
         noise_threshold = 0.0005
         audio_data = np.where(np.abs(audio_data) < noise_threshold, 0, audio_data)
 
