@@ -170,14 +170,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # Run development server
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-### Jupyter Development
-```bash
-# Start Jupyter for model development
-cd Managejupyter
-jupyter notebook CheckTrained.ipynb
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8081
 ```
 
 ## 🛠️ Audio Processing Features
