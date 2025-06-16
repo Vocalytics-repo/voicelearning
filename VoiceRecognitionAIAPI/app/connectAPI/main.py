@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 import uvicorn
 import os
-import os
 from dotenv import load_dotenv
 load_dotenv()  # .env 파일 로드
 # 라우터 임포트
