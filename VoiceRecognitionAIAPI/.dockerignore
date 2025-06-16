@@ -2,9 +2,6 @@ venv/
 env/
 .venv/
 .env/
-*.pt
-app/model/trainedModel.pt
-app/connectAPI/service/model/trainedModel.pt
 __pycache__/
 */__pycache__/
 *.pyc

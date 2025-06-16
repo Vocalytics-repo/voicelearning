@@ -1,9 +1,13 @@
 from http.client import HTTPException
 from fastapi import APIRouter, File, UploadFile
 from typing import Dict, Any
+from fastapi.responses import JSONResponse
 from app.connectAPI.service.errorcheck.typeerror import errorhandling
-from app.connectAPI.service.control import control_all
+from app.connectAPI.service.control import control_all, mfcc_control_all
 from app.connectAPI.service.preprocessing.mp3_to_wav import mp3_to_wav
+from transformers import pipeline
+
+# 사용
 router = APIRouter()
 
 @router.post("/api/v1/stt")
@@ -27,7 +31,15 @@ async def soundtotext(file: UploadFile = File(...)) -> Dict[str,Any]:
     else:
         file_content = await file.read()
         wav_file_data = await mp3_to_wav(file_content, file.filename)
-        text = await control_all(wav_file_data)
-        return text
+        #text = await control_all(wav_file_data)
+        text = await mfcc_control_all(wav_file_data)
+        gender_classifier = pipeline("audio-classification",
+                                     model="alefiury/wav2vec2-large-xlsr-53-gender-recognition-librispeech")
+        result = gender_classifier(wav_file_data)
+        response_data = {
+            "text" : text,
+            "gender_result": result
+        }
+        return JSONResponse(content=response_data)
 
 
