@@ -187,3 +187,13 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8081
 - **MFCC Feature Extraction**: Mel-frequency cepstral coefficients
 - **Voice Activity Detection**: Intelligent speech segment detection
 
+
+2025.04.09 commit
+코랩의 RAM(12GB~24GB) 이슈로 인하여 학습 한계 (할당 받은 GPU 서버 4월 10일 점검으로 인하여 임시 학습 진행 - 서버에 학습 데이터를 올릴 경우 손실 예상하여 아직 올리지 않음), 로컬 CUDA로 돌릴 수도 있음
+-> Modify commit history
+Due to the issue of RAM (12GB~24GB) of Colab, learning is limited (temporary learning is in progress due to maintenance of the allocated GPU server on April 10 - learning data is not uploaded to the server yet as it is expected to be lost), and can be run with local CUDA.
+
+2025.06.14
+feat, fix: 기존 학습 모델 pt파일과 추후 학습한 파일 비교를 하였으나 추후 학습한 파일의 성능이 기존 파인튜닝 학습 파일에 비하여 성능이 보전되는 경향을 보이지 않아 제거 후 안녕하세요 안녕하세요 안녕하세요 라는 학습 테스트 파일에 대하여 잡지 못하는 모습을 보여 해당 파트에 대해서 노이즈 감소를 시도
+-> Modifiy commit history
+feat, fix: The existing learning model pt file and the later learned file were compared, but the performance of the later learned file did not show a tendency to be preserved compared to the existing fine-tuning learning file, so it was removed. It showed that it could not catch the learning test file called "Hello, Hello, Hello", so noise reduction was attempted for that part.
